@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #aa3bff;
+  --color-primary-hover: #9b2cee;
+  --color-accent-yellow: #fcd34d;
+  --color-accent-green: #4ade80;
+  --color-accent-red: #f87171;
+  --color-dark-bg: #0a0a0a;
+  --color-dark-panel: #111111;
+  --color-dark-border: #1f1f1f;
+}
+
+
+body {
+  background-color: #0a0a0a;
+  color: white;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* OTP Glow Effect */
+.glow-text {
+  text-shadow: 0 0 40px rgba(170, 59, 255, 0.4), 0 0 80px rgba(170, 59, 255, 0.15);
+}
+
+.glow-green {
+  text-shadow: 0 0 40px rgba(74, 222, 128, 0.5), 0 0 80px rgba(74, 222, 128, 0.2);
+}
+
+/* Scrollbar hide */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Custom scrollbar for dark panels */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #252525 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Pulse animation for live indicators */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.live-pulse { animation: live-pulse 2s ease-in-out infinite; }
+
+/* Night glow border on ready orders */
+@keyframes glow-border {
+  0%, 100% { box-shadow: 0 0 10px rgba(74, 222, 128, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.4), 0 0 40px rgba(74, 222, 128, 0.15); }
+}
+
+.glow-border-green { animation: glow-border 2s ease-in-out infinite; }
+
+/* Status progress bar animation */
+@keyframes progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Toast slide-in */
+@keyframes toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+.toast-enter { animation: toast-in 0.35s ease forwards; }
+.toast-exit { animation: toast-out 0.35s ease forwards; }
+
+/* Font utility classes */
+.font-inter { font-family: 'Inter', system-ui, sans-serif; }
+.font-outfit { font-family: 'Outfit', system-ui, sans-serif; }
+.font-mono-styled { font-family: 'JetBrains Mono', 'Courier New', monospace; }
