@@ -34,7 +34,7 @@ const useCartStore = create((set, get) => ({
 
   getItemCount: () => get().items.reduce((total, item) => total + item.quantity, 0),
 
-  placeOrder: async (studentName, rollNumber) => {
+  placeOrder: async (studentName, rollNumber, customerEmail) => {
     const { items, getCartTotal } = get();
     if (!items.length) throw new Error('Cart is empty');
 
@@ -49,6 +49,7 @@ const useCartStore = create((set, get) => ({
     const response = await ordersAPI.place({
       studentName,
       rollNumber,
+      customerEmail: customerEmail || '',
       items: orderItems,
     });
 

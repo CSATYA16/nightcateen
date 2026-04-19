@@ -12,6 +12,7 @@ const orderSchema = new mongoose.Schema({
   orderId: { type: String, unique: true, required: true },
   studentName: { type: String, required: true },
   rollNumber: { type: String, required: true },
+  customerEmail: { type: String, default: '' },
   items: [orderItemSchema],
   otp: { type: String, required: true },
   status: {

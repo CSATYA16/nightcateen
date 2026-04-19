@@ -31,7 +31,7 @@ export default function Cart() {
     setLoading(true);
     try {
       // Pass user email as the unique tracking ID / Roll Number
-      const order = await placeOrder(user.name, user.email);
+      const order = await placeOrder(user.name, user.email, user.email);
       setOrderResult(order);
     } catch (err) {
       toast(err?.response?.data?.error || 'Failed to place order. Please try again.', 'error');

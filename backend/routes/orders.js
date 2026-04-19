@@ -4,6 +4,34 @@ const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 const Transaction = require('../models/Transaction');
 const adminAuth = require('../middleware/adminAuth');
+const nodemailer = require('nodemailer');
+
+// ── Email helper ──────────────────────────────────────────────────────────────
+async function sendOrderReadyEmail(email, studentName, orderId, otp) {
+  if (!email || !process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_gmail_address@gmail.com') {
+    console.log(`📧 EMAIL SIMULATION -> Order ready email to ${email}`);
+    return;
+  }
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+  });
+  await transporter.sendMail({
+    from: `"Night Canteen" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `🍽️ Your Order ${orderId} is Ready!`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:460px;margin:0 auto;padding:24px;border:1px solid #eaeaea;border-radius:12px;text-align:center">
+        <h2 style="color:#6a0dad">🌙 Night Canteen</h2>
+        <h3 style="color:#333">Your order is ready for pickup! 🎉</h3>
+        <p style="color:#555">Hi <strong>${studentName}</strong>, your order <strong>${orderId}</strong> is hot and ready at the counter!</p>
+        <div style="background:#f4f4f4;padding:16px;font-size:28px;font-weight:bold;letter-spacing:8px;margin:20px 0;border-radius:8px">${otp}</div>
+        <p style="color:#777;font-size:13px">Show this OTP at the counter to collect your order.</p>
+      </div>
+    `
+  });
+  console.log(`📧 EMAIL DISPATCHED -> Order ready email sent to ${email}`);
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function generateOTP() {
@@ -41,7 +69,7 @@ router.get('/active', async (req, res) => {
 // POST /api/orders
 router.post('/', async (req, res) => {
   try {
-    const { studentName, rollNumber, items } = req.body;
+    const { studentName, rollNumber, items, customerEmail } = req.body;
     if (!studentName || !rollNumber || !items || items.length === 0) {
       return res.status(400).json({ error: 'Name, roll number, and items are required.' });
     }
@@ -56,6 +84,7 @@ router.post('/', async (req, res) => {
       orderId,
       studentName,
       rollNumber,
+      customerEmail: customerEmail || '',
       items,
       otp,
       total,
@@ -115,6 +144,16 @@ router.patch('/:id/status', adminAuth, async (req, res) => {
       { new: true }
     );
     if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Send email notification to customer when order is marked ready
+    if (status === 'ready' && order.customerEmail) {
+      try {
+        await sendOrderReadyEmail(order.customerEmail, order.studentName, order.orderId, order.otp);
+      } catch (mailErr) {
+        console.error('⚠️ Failed to send ready email:', mailErr.message);
+      }
+    }
+
     res.json({ order });
   } catch (err) {
     res.status(500).json({ error: err.message });

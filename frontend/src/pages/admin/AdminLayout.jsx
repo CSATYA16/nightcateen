@@ -1,8 +1,8 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, UtensilsCrossed, ClipboardList, Tag, LogOut, Package, BarChart2, Moon, Menu as MenuIcon, X } from 'lucide-react';
-import { useState } from 'react';
+import { LayoutDashboard, UtensilsCrossed, ClipboardList, Tag, LogOut, Package, BarChart2, Moon, Menu as MenuIcon, X, Bell } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { ordersAPI } from '../../lib/api';
 
 const Dashboard = lazy(() => import('./Dashboard'));
 const MenuManager = lazy(() => import('./MenuManager'));
@@ -10,10 +10,12 @@ const OrdersManager = lazy(() => import('./OrdersManager'));
 const DealsManager = lazy(() => import('./DealsManager'));
 const StockManager = lazy(() => import('./StockManager'));
 const Analytics = lazy(() => import('./Analytics'));
+const Notifications = lazy(() => import('./Notifications'));
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
   { name: 'Orders', path: '/admin/orders', icon: ClipboardList },
+  { name: 'Notifications', path: '/admin/notifications', icon: Bell },
   { name: 'Menu', path: '/admin/menu', icon: UtensilsCrossed },
   { name: 'Stock', path: '/admin/stock', icon: Package },
   { name: 'Deals', path: '/admin/deals', icon: Tag },
@@ -25,6 +27,22 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const logout = useAuthStore(state => state.logout);
   const [mobileNav, setMobileNav] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const seenOrderIds = useState(() => new Set(JSON.parse(localStorage.getItem('nc_read_notifs') || '[]')))[0];
+
+  useEffect(() => {
+    const checkNewOrders = async () => {
+      try {
+        const res = await ordersAPI.getAll();
+        const orders = res.data.orders || [];
+        const unread = orders.filter(o => !seenOrderIds.has(o._id)).length;
+        setUnreadCount(unread);
+      } catch {}
+    };
+    checkNewOrders();
+    const interval = setInterval(checkNewOrders, 8000);
+    return () => clearInterval(interval);
+  }, [seenOrderIds]);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -36,6 +54,7 @@ export default function AdminLayout() {
   const SidebarLink = ({ item }) => {
     const active = isActive(item.path);
     const Icon = item.icon;
+    const isBell = item.name === 'Notifications';
     return (
       <Link
         to={item.path}
@@ -46,7 +65,14 @@ export default function AdminLayout() {
             : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
         }`}
       >
-        <Icon size={18} />
+        <div className="relative">
+          <Icon size={18} />
+          {isBell && unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </div>
         {item.name}
         {item.name === 'Orders' && (
           <span className="ml-auto w-2 h-2 rounded-full bg-accent-green animate-pulse" />
@@ -117,6 +143,14 @@ export default function AdminLayout() {
             <div className="flex items-center gap-1.5 bg-accent-green/10 border border-accent-green/20 px-3 py-1 rounded-full text-xs text-accent-green font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" /> Kitchen Open
             </div>
+            <Link to="/admin/notifications" className="relative p-2 text-neutral-400 hover:text-white transition-colors">
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
             <div className="hidden sm:block text-xs text-neutral-500">
               {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -129,6 +163,7 @@ export default function AdminLayout() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/orders" element={<OrdersManager />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/menu" element={<MenuManager />} />
               <Route path="/stock" element={<StockManager />} />
               <Route path="/deals" element={<DealsManager />} />
