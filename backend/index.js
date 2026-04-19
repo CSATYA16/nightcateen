@@ -84,6 +84,8 @@ function startDemoMode() {
   const demoRouter = express.Router();
 
   // Auth
+  const temporaryOtps = new Map(); // Store phone -> otp mapping for simulation
+
   demoRouter.post('/auth/login', (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'admin123') {
@@ -91,6 +93,30 @@ function startDemoMode() {
       return res.json({ token, role: 'admin', name: 'Admin' });
     }
     res.status(401).json({ error: 'Invalid credentials' });
+  });
+
+  demoRouter.post('/auth/send-otp', (req, res) => {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Phone number is required' });
+    const otp = generateOTP();
+    temporaryOtps.set(phone, otp);
+    setTimeout(() => temporaryOtps.delete(phone), 60 * 1000); // Expires in 60s
+    console.log(`📱 SMS SIMULATION -> Sent OTP [${otp}] to ${phone}`);
+    res.json({ success: true, message: 'OTP sent successfully', _demo_otp: otp }); // Send it back to show in Toast for demo
+  });
+
+  demoRouter.post('/auth/verify-otp', (req, res) => {
+    const { phone, otp, isSignup, name, room } = req.body;
+    const storedOtp = temporaryOtps.get(phone);
+    
+    if (!storedOtp) return res.status(400).json({ error: 'OTP expired or not requested' });
+    if (storedOtp !== otp) return res.status(400).json({ error: 'Invalid OTP' });
+    
+    // Clear the OTP to prevent replay
+    temporaryOtps.delete(phone);
+    
+    const token = jwt.sign({ role: 'customer', phone }, 'nightcanteen_secret', { expiresIn: '24h' });
+    res.json({ token, role: 'customer', name: isSignup ? name : 'Demo Student', phone, room: isSignup ? room : 'A-101' });
   });
 
   demoRouter.get('/auth/verify', (req, res) => {

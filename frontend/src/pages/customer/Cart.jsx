@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Minus, ArrowRight, Clock, ShoppingBag, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, Clock, ShoppingBag, CheckCircle, Lock } from 'lucide-react';
 import useCartStore from '../../store/cartStore';
+import useAuthStore from '../../store/authStore';
 import { toast } from '../../components/ui/Toast';
 
 export default function Cart() {
   const { items, updateQuantity, removeItem, getCartTotal, placeOrder } = useCartStore();
+  const { user } = useAuthStore();
   const total = getCartTotal();
   const navigate = useNavigate();
   
-  const [studentName, setStudentName] = useState('');
-  const [rollNumber, setRollNumber] = useState(localStorage.getItem('nc_rollNumber') || '');
   const [loading, setLoading] = useState(false);
   const [orderResult, setOrderResult] = useState(null);
 
@@ -19,8 +19,9 @@ export default function Cart() {
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!studentName.trim() || !rollNumber.trim()) {
-      toast('Please enter your name and roll number.', 'warning');
+    if (!user) {
+      toast('Please login to place your order.', 'warning');
+      navigate('/login?redirect=/cart');
       return;
     }
     if (items.length === 0) {
@@ -29,7 +30,8 @@ export default function Cart() {
     }
     setLoading(true);
     try {
-      const order = await placeOrder(studentName.trim(), rollNumber.trim());
+      // Pass user email as the unique tracking ID / Roll Number
+      const order = await placeOrder(user.name, user.email);
       setOrderResult(order);
     } catch (err) {
       toast(err?.response?.data?.error || 'Failed to place order. Please try again.', 'error');
@@ -47,7 +49,6 @@ export default function Cart() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-neutral-900/60 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl"
         >
-          {/* Green success top */}
           <div className="bg-gradient-to-r from-accent-green/15 to-transparent border-b border-accent-green/20 px-8 py-6 text-center">
             <div className="w-16 h-16 rounded-full bg-accent-green/15 border border-accent-green/30 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="text-accent-green" size={32} />
@@ -57,7 +58,6 @@ export default function Cart() {
           </div>
 
           <div className="p-8 text-center">
-            {/* OTP — the hero element */}
             <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-3">Your Pickup Code</p>
             <div className="font-mono-styled text-8xl font-bold tracking-[0.3em] text-white glow-text bg-neutral-950 inline-block py-5 px-6 rounded-2xl border border-white/8 shadow-inner mb-4">
               {orderResult.otp}
@@ -124,7 +124,6 @@ export default function Cart() {
 
       <form onSubmit={handlePlaceOrder}>
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Items */}
           <div className="flex-1 space-y-3">
             <AnimatePresence>
               {items.map((item) => {
@@ -165,7 +164,6 @@ export default function Cart() {
             </AnimatePresence>
           </div>
 
-          {/* Summary & Checkout */}
           <div className="w-full lg:w-[320px]">
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 sticky top-24">
               <h3 className="text-xl font-bold font-outfit mb-4">Summary</h3>
@@ -190,46 +188,43 @@ export default function Cart() {
                 <span>Est. prep time: <strong className="text-white">~{estimatedMins} mins</strong> based on current queue.</span>
               </div>
 
-              {/* Student Details */}
-              <div className="space-y-3 mb-5">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1.5">Roll Number / Student ID</label>
-                  <input
-                    required
-                    value={rollNumber}
-                    onChange={e => setRollNumber(e.target.value)}
-                    type="text"
-                    placeholder="e.g. 2021CS01"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-primary transition-all placeholder:text-neutral-600"
-                  />
+              {user ? (
+                <div className="mb-5 p-4 bg-neutral-950 border border-neutral-800 rounded-xl">
+                   <div className="flex items-center justify-between mb-2">
+                     <span className="text-xs text-neutral-500 font-bold uppercase tracking-wider">Ordering As</span>
+                     <CheckCircle size={14} className="text-accent-green" />
+                   </div>
+                   <p className="text-sm font-semibold text-white">{user.name}</p>
+                   <p className="text-xs text-neutral-400 mt-1">{user.email} {user.room ? `• ${user.room}` : ''}</p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-400 mb-1.5">Your Name</label>
-                  <input
-                    required
-                    value={studentName}
-                    onChange={e => setStudentName(e.target.value)}
-                    type="text"
-                    placeholder="e.g. Arjun Kumar"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-2.5 px-4 text-white text-sm focus:outline-none focus:border-primary transition-all placeholder:text-neutral-600"
-                  />
+              ) : (
+                <div className="mb-5 p-4 bg-primary/10 border border-primary/20 rounded-xl text-center">
+                  <Lock size={20} className="text-primary mx-auto mb-2" />
+                  <p className="text-xs text-primary font-medium">You must be logged in to order</p>
                 </div>
-              </div>
+              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 shadow-[0_0_30px_-5px_rgba(170,59,255,0.4)] flex justify-center items-center gap-2 disabled:opacity-60 text-sm"
-              >
-                {loading ? (
-                  <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Placing Order...</>
-                ) : (
-                  <>Place Order · ₹{total}</>
-                )}
-              </button>
-              <p className="text-center text-xs text-neutral-600 mt-3">
-                You'll receive a 4-digit OTP for pickup
-              </p>
+              {user ? (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 shadow-[0_0_30px_-5px_rgba(170,59,255,0.4)] flex justify-center items-center gap-2 disabled:opacity-60 text-sm"
+                >
+                  {loading ? (
+                    <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Placing Order...</>
+                  ) : (
+                    <>Place Order · ₹{total}</>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/login?redirect=/cart')}
+                  className="w-full bg-white text-black hover:bg-neutral-200 font-bold py-3.5 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 text-sm"
+                >
+                  <Lock size={16} /> Login to Checkout
+                </button>
+              )}
             </div>
           </div>
         </div>
