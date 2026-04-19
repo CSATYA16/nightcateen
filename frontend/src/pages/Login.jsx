@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Shield, Lock, Mail, Hash, ArrowRight, UserPlus, LogIn, KeyRound } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { toast } from '../components/ui/Toast';
+import API_BASE from '../config/api';
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState('user'); // 'user' or 'admin'
@@ -37,7 +38,7 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/send-otp', {
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -62,7 +63,7 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/verify-otp', {
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, isSignup, name, room })
