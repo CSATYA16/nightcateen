@@ -18,6 +18,8 @@ router.post('/login', (req, res) => {
 
 // Nodemailer Email Integration
 const nodemailer = require('nodemailer');
+const EMAIL_USER = process.env.EMAIL_USER || 'satyanarayanareddy.chukkaluru@gmail.com';
+const EMAIL_PASS = process.env.EMAIL_PASS || 'npyiwguzgyawxtor';
 const temporaryOtps = new Map();
 
 function generateOTP() { return String(Math.floor(1000 + Math.random() * 9000)); }
@@ -31,37 +33,29 @@ router.post('/send-otp', async (req, res) => {
   setTimeout(() => temporaryOtps.delete(email), 5 * 60 * 1000); // 5 min expiry
   
   try {
-    if (process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your_gmail_address@gmail.com') {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+    });
 
-      const mailOptions = {
-        from: `"Night Canteen" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Your Login OTP',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; text-align: center;">
-            <h2 style="color: #6a0dad;">🌙 Night Canteen</h2>
-            <p style="color: #555;">Hello! Here is your secure one-time password to access the app.</p>
-            <div style="background-color: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 5px;">
-              ${otp}
-            </div>
-            <p style="color: #999; font-size: 12px;">This code will expire in 5 minutes. Please do not share it.</p>
+    const mailOptions = {
+      from: `"Night Canteen" <${EMAIL_USER}>`,
+      to: email,
+      subject: 'Your Night Canteen Login OTP',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; text-align: center;">
+          <h2 style="color: #6a0dad;">🌙 Night Canteen</h2>
+          <p style="color: #555;">Hello! Here is your secure one-time password to access the app.</p>
+          <div style="background-color: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 5px;">
+            ${otp}
           </div>
-        `
-      };
+          <p style="color: #999; font-size: 12px;">This code will expire in 5 minutes. Please do not share it.</p>
+        </div>
+      `
+    };
 
-      await transporter.sendMail(mailOptions);
-      console.log(`📧 EMAIL DISPATCHED -> real message sent to ${email}`);
-    } else {
-      console.warn('⚠️ Nodemailer keys not configured in .env. Falling back to local console mock delivery.');
-      console.log(`📧 EMAIL SIMULATION -> Sent OTP [${otp}] to ${email}`);
-    }
+    await transporter.sendMail(mailOptions);
+    console.log(`📧 OTP EMAIL DISPATCHED -> ${email}`);
     
     res.json({ success: true, message: 'OTP sent successfully' });
   } catch (error) {

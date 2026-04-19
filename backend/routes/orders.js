@@ -6,20 +6,23 @@ const Transaction = require('../models/Transaction');
 const adminAuth = require('../middleware/adminAuth');
 const nodemailer = require('nodemailer');
 
-// ── Email helper ──────────────────────────────────────────────────────────────
+// ── Email helper ─────────────────────────────────────────────────────────────
+const EMAIL_USER = process.env.EMAIL_USER || 'satyanarayanareddy.chukkaluru@gmail.com';
+const EMAIL_PASS = process.env.EMAIL_PASS || 'npyiwguzgyawxtor';
+
 async function sendOrderReadyEmail(email, studentName, orderId, otp) {
-  if (!email || !process.env.EMAIL_USER || process.env.EMAIL_USER === 'your_gmail_address@gmail.com') {
-    console.log(`📧 EMAIL SIMULATION -> Order ready email to ${email}`);
+  if (!email) {
+    console.log(`📧 No customer email on order — skipping ready notification.`);
     return;
   }
   const transporter = nodemailer.createTransport({
     service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    auth: { user: EMAIL_USER, pass: EMAIL_PASS }
   });
   await transporter.sendMail({
-    from: `"Night Canteen" <${process.env.EMAIL_USER}>`,
+    from: `"Night Canteen" <${EMAIL_USER}>`,
     to: email,
-    subject: `🍽️ Your Order ${orderId} is Ready!`,
+    subject: `🍽️ Your Order ${orderId} is Ready for Pickup!`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:460px;margin:0 auto;padding:24px;border:1px solid #eaeaea;border-radius:12px;text-align:center">
         <h2 style="color:#6a0dad">🌙 Night Canteen</h2>
@@ -30,7 +33,7 @@ async function sendOrderReadyEmail(email, studentName, orderId, otp) {
       </div>
     `
   });
-  console.log(`📧 EMAIL DISPATCHED -> Order ready email sent to ${email}`);
+  console.log(`📧 ORDER READY EMAIL DISPATCHED -> ${email}`);
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
