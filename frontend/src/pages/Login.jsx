@@ -15,6 +15,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore(state => state.login);
+  const adminLogin = useAuthStore(state => state.adminLogin);
 
   // Extract redirect url (e.g. ?redirect=/cart)
   const redirectParams = new URLSearchParams(location.search);
@@ -84,15 +85,18 @@ export default function Login() {
   };
 
   // ---------- Admin Flow ----------
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
     if (!adminUser || !adminPass) return;
-    
-    if (adminUser === 'admin' && adminPass === 'admin123') {
-      login({ name: 'Admin', role: 'admin' });
+    setLoading(true);
+    try {
+      await adminLogin(adminUser, adminPass);
+      toast('Welcome back, Admin!', 'success');
       navigate('/admin');
-    } else {
-      toast('Invalid admin credentials. Use admin / admin123', 'error');
+    } catch (err) {
+      toast('Invalid admin credentials', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
