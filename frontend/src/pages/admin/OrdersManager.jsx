@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, ChefHat, Check, X } from 'lucide-react';
+import { Clock, ChefHat, Check, X, Phone } from 'lucide-react';
 import { ordersAPI } from '../../lib/api';
 import { toast } from '../../components/ui/Toast';
 import Modal from '../../components/ui/Modal';
@@ -138,9 +138,16 @@ export default function OrdersManager() {
                     <span className="font-mono text-base font-bold text-white">{order.orderId}</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold border capitalize ${getStatusBadge(order.status)}`}>{order.status}</span>
                   </div>
-                  <div className="text-xs text-neutral-500 flex items-center gap-1">
+                  <div className="text-xs text-neutral-500 flex items-center gap-1 flex-wrap">
                     <Clock size={12} /> {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    <span className="ml-2 text-neutral-600">· {order.studentName} · {order.rollNumber}</span>
+                    <span className="ml-1 text-neutral-600">· {order.studentName}</span>
+                    {order.customerPhone && (
+                      <a href={`tel:${order.customerPhone}`}
+                        className="ml-1 flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium"
+                        title="Call customer">
+                        <Phone size={11} /> {order.customerPhone}
+                      </a>
+                    )}
                   </div>
                 </div>
                 <div className="text-right shrink-0 ml-2">
@@ -160,9 +167,17 @@ export default function OrdersManager() {
                     </li>
                   ))}
                 </ul>
-                <div className="pt-2 mt-2 border-t border-neutral-800 flex justify-between text-xs">
-                  <span className="text-neutral-500">Total</span>
-                  <span className="font-bold text-white">₹{order.total}</span>
+                <div className="pt-2 mt-2 border-t border-neutral-800 space-y-1">
+                  {order.packingCharges > 0 && (
+                    <div className="flex justify-between text-xs text-neutral-500">
+                      <span>Packing charges</span>
+                      <span>+₹{order.packingCharges}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs">
+                    <span className="text-neutral-500">Total</span>
+                    <span className="font-bold text-white">₹{order.total}</span>
+                  </div>
                 </div>
               </div>
 

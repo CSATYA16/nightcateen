@@ -13,6 +13,7 @@ const orderSchema = new mongoose.Schema({
   studentName: { type: String, required: true },
   rollNumber: { type: String, required: true },
   customerEmail: { type: String, default: '' },
+  customerPhone: { type: String, default: '' },
   items: [orderItemSchema],
   otp: { type: String, required: true },
   status: {
@@ -21,6 +22,7 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   total: { type: Number, required: true },
+  packingCharges: { type: Number, default: 0 },
   estimatedMins: { type: Number, default: 15 },
   pickedUp: { type: Boolean, default: false },
   otpVerified: { type: Boolean, default: false },

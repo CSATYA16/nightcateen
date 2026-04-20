@@ -62,14 +62,16 @@ export default function Navbar() {
 
           {/* User Section */}
           {user ? (
-            <div className="flex items-center gap-3 border-l border-white/10 pl-4 sm:pl-6">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-white">{user.name}</p>
-                <p className="text-[10px] text-neutral-500">{user.room || 'Admin'}</p>
-              </div>
-              <button onClick={handleLogout} className="p-2 text-neutral-400 hover:text-red-400 hover:bg-neutral-900 rounded-full transition-colors">
-                <LogOut size={18} />
-              </button>
+            <div className="flex items-center gap-2 border-l border-white/10 pl-4 sm:pl-6">
+              <Link to="/profile" className="flex items-center gap-2 group">
+                <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary group-hover:bg-primary/30 transition-colors">
+                  <User size={18} />
+                </div>
+                <div className="hidden sm:block text-right">
+                  <p className="text-sm font-medium text-white group-hover:text-primary transition-colors">{user.name}</p>
+                  <p className="text-[10px] text-neutral-500">{user.phone ? `📞 ${user.phone}` : (user.room || 'View Profile')}</p>
+                </div>
+              </Link>
             </div>
           ) : (
             <div className="border-l border-white/10 pl-4 sm:pl-6">

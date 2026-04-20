@@ -17,6 +17,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/menu', require('./routes/menu'));
 app.use('/api/deals', require('./routes/deals'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/users', require('./routes/users'));
 
 app.get('/', (req, res) => {
   res.json({ message: '🌙 Night Canteen API is running', status: 'ok', timestamp: new Date() });

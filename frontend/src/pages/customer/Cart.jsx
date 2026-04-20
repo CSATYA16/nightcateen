@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Minus, ArrowRight, Clock, ShoppingBag, CheckCircle, Lock } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, Clock, ShoppingBag, CheckCircle, Lock, Package } from 'lucide-react';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import { toast } from '../../components/ui/Toast';
@@ -14,6 +14,10 @@ export default function Cart() {
   
   const [loading, setLoading] = useState(false);
   const [orderResult, setOrderResult] = useState(null);
+  const [packingEnabled, setPackingEnabled] = useState(false);
+  const PACKING_CHARGE = 10; // ₹10 flat packing charge
+  const packingCharges = packingEnabled ? PACKING_CHARGE : 0;
+  const grandTotal = total + packingCharges;
 
   const estimatedMins = Math.max(10, items.length * 3 + 10);
 
@@ -30,8 +34,7 @@ export default function Cart() {
     }
     setLoading(true);
     try {
-      // Pass user email as the unique tracking ID / Roll Number
-      const order = await placeOrder(user.name, user.email, user.email);
+      const order = await placeOrder(user.name, user.email, user.email, user.phone || '', packingCharges);
       setOrderResult(order);
     } catch (err) {
       toast(err?.response?.data?.error || 'Failed to place order. Please try again.', 'error');
@@ -173,13 +176,26 @@ export default function Cart() {
                   <span>Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
                   <span>₹{total}</span>
                 </div>
-                <div className="flex justify-between text-neutral-400">
-                  <span>Packaging</span>
-                  <span className="text-accent-green text-xs border border-accent-green/20 bg-accent-green/10 px-1.5 py-0.5 rounded">Free</span>
+                {/* Packing Charges Toggle */}
+                <div className="flex justify-between items-center py-2 px-3 bg-neutral-950 border border-neutral-800 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Package size={14} className="text-primary" />
+                    <span className="text-neutral-300 text-xs">Packing Charges</span>
+                    <span className="text-neutral-600 text-[10px]">₹{PACKING_CHARGE}</span>
+                  </div>
+                  <button type="button" onClick={() => setPackingEnabled(p => !p)}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${packingEnabled ? 'bg-primary' : 'bg-neutral-700'}`}>
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${packingEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
                 </div>
+                {packingEnabled && (
+                  <div className="flex justify-between text-neutral-400 text-xs px-1">
+                    <span>Packing</span><span>+₹{PACKING_CHARGE}</span>
+                  </div>
+                )}
                 <div className="border-t border-neutral-800 pt-3 flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">₹{total}</span>
+                  <span className="text-primary">₹{grandTotal}</span>
                 </div>
               </div>
 

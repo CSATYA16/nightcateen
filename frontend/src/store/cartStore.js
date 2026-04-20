@@ -34,8 +34,8 @@ const useCartStore = create((set, get) => ({
 
   getItemCount: () => get().items.reduce((total, item) => total + item.quantity, 0),
 
-  placeOrder: async (studentName, rollNumber, customerEmail) => {
-    const { items, getCartTotal } = get();
+  placeOrder: async (studentName, rollNumber, customerEmail, customerPhone, packingCharges) => {
+    const { items } = get();
     if (!items.length) throw new Error('Cart is empty');
 
     const orderItems = items.map(item => ({
@@ -50,6 +50,8 @@ const useCartStore = create((set, get) => ({
       studentName,
       rollNumber,
       customerEmail: customerEmail || '',
+      customerPhone: customerPhone || '',
+      packingCharges: packingCharges || 0,
       items: orderItems,
     });
 

@@ -72,12 +72,14 @@ router.get('/active', async (req, res) => {
 // POST /api/orders
 router.post('/', async (req, res) => {
   try {
-    const { studentName, rollNumber, items, customerEmail } = req.body;
+    const { studentName, rollNumber, items, customerEmail, customerPhone, packingCharges } = req.body;
     if (!studentName || !rollNumber || !items || items.length === 0) {
       return res.status(400).json({ error: 'Name, roll number, and items are required.' });
     }
 
-    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const itemsTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const packing = Number(packingCharges) || 0;
+    const total = itemsTotal + packing;
     const otp = generateOTP();
     const orderId = generateOrderId();
     const estimatedMins = await calcEstimatedMins();
@@ -88,9 +90,11 @@ router.post('/', async (req, res) => {
       studentName,
       rollNumber,
       customerEmail: customerEmail || '',
+      customerPhone: customerPhone || '',
       items,
       otp,
       total,
+      packingCharges: packing,
       estimatedMins,
       otpExpiresAt,
     });

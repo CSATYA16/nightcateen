@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Shield, Lock, Mail, Hash, ArrowRight, UserPlus, LogIn, KeyRound } from 'lucide-react';
+import { User, Shield, Lock, Mail, Hash, ArrowRight, UserPlus, LogIn, KeyRound, Phone, Home } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { toast } from '../components/ui/Toast';
 import API_BASE from '../config/api';
@@ -24,7 +24,8 @@ export default function Login() {
   // User State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [room, setRoom] = useState('');
+  const [phone, setPhone] = useState('');
+  const [room, setRoom] = useState('');  
   const [otp, setOtp] = useState('');
 
   // Admin State
@@ -35,7 +36,7 @@ export default function Login() {
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!email) return toast('Please enter your email address', 'warning');
-    if (isSignup && (!name || !room)) return toast('Please fill all fields', 'warning');
+    if (isSignup && (!name || !phone || !room)) return toast('Please fill all fields including phone', 'warning');
     
     setLoading(true);
     try {
@@ -67,11 +68,11 @@ export default function Login() {
       const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, isSignup, name, room })
+        body: JSON.stringify({ email, otp, isSignup, name, phone, room })
       });
       const data = await res.json();
-      if(data.token) {
-        login({ name: data.name, email: data.email, phone: data.email, room: data.room, role: 'customer' });
+      if (data.token) {
+        login({ name: data.name, email: data.email, phone: data.phone || '', room: data.room || '', role: 'customer' }, data.token);
         toast('Logged in successfully!', 'success');
         navigate(redirectUrl);
       } else {
@@ -222,6 +223,22 @@ export default function Login() {
                                  value={room}
                                  onChange={(e)=>setRoom(e.target.value)}
                                  placeholder="e.g. D-215"
+                                 className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
+                               />
+                             </div>
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-neutral-400 mb-1 ml-1">Phone Number</label>
+                             <div className="relative">
+                               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-neutral-500">
+                                 <Phone size={18} />
+                               </div>
+                               <input 
+                                 required={isSignup}
+                                 type="tel" 
+                                 value={phone}
+                                 onChange={(e)=>setPhone(e.target.value)}
+                                 placeholder="e.g. 9876543210"
                                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
                                />
                              </div>

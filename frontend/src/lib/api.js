@@ -72,4 +72,10 @@ export const authAPI = {
   verify: () => api.get('/auth/verify'),
 };
 
+// ── Users ─────────────────────────────────────────────────────────────────
+export const userAPI = {
+  getProfile: () => api.get('/users/profile'),
+  updateProfile: (data) => api.post('/users/profile', data),
+};
+
 export default api;

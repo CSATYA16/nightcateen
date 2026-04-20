@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
@@ -64,8 +65,8 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
-router.post('/verify-otp', (req, res) => {
-  const { email, otp, isSignup, name, room } = req.body;
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp, isSignup, name, phone, room } = req.body;
   const storedOtp = temporaryOtps.get(email);
   
   if (!storedOtp) return res.status(400).json({ error: 'OTP expired or not requested' });
@@ -73,9 +74,34 @@ router.post('/verify-otp', (req, res) => {
   
   temporaryOtps.delete(email);
   
-  // Notice we now issue the JWT using email payload
+  // Upsert user profile in MongoDB
+  let userDoc;
+  try {
+    userDoc = await User.findOneAndUpdate(
+      { email },
+      { 
+        $set: {
+          ...(name && { name }),
+          ...(phone && { phone }),
+          ...(room && { room }),
+        },
+        $setOnInsert: { name: name || email.split('@')[0], email }
+      },
+      { new: true, upsert: true }
+    );
+  } catch (e) {
+    console.error('User upsert error:', e.message);
+  }
+
   const token = jwt.sign({ role: 'customer', email }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token, role: 'customer', name: isSignup ? name : 'Demo Student', email, phone: email, room: isSignup ? room : 'A-101' });
+  res.json({
+    token,
+    role: 'customer',
+    name: userDoc?.name || name || email.split('@')[0],
+    email,
+    phone: userDoc?.phone || phone || '',
+    room: userDoc?.room || room || '',
+  });
 });
 
 // POST /api/auth/verify
