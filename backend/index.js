@@ -1,4 +1,7 @@
 require('dotenv').config();
+// Force Google DNS to fix mongodb+srv:// SRV resolution on Windows
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

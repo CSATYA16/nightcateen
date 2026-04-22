@@ -26,9 +26,23 @@ const temporaryOtps = new Map();
 function generateOTP() { return String(Math.floor(1000 + Math.random() * 9000)); }
 
 router.post('/send-otp', async (req, res) => {
-  const { email } = req.body;
+  const { email, isSignup } = req.body;
   if (!email) return res.status(400).json({ error: 'Email address is required' });
-  
+
+  // Check registration status
+  try {
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (isSignup && existingUser) {
+      return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
+    }
+    if (!isSignup && !existingUser) {
+      return res.status(404).json({ error: 'No account found with this email. Please create an account first.' });
+    }
+  } catch (dbErr) {
+    console.error('DB check error:', dbErr.message);
+    // Allow proceeding if DB check fails (non-critical)
+  }
+
   const otp = generateOTP();
   temporaryOtps.set(email, otp);
   setTimeout(() => temporaryOtps.delete(email), 5 * 60 * 1000); // 5 min expiry
@@ -74,23 +88,27 @@ router.post('/verify-otp', async (req, res) => {
   
   temporaryOtps.delete(email);
   
-  // Upsert user profile in MongoDB
   let userDoc;
   try {
-    userDoc = await User.findOneAndUpdate(
-      { email },
-      { 
-        $set: {
-          ...(name && { name }),
-          ...(phone && { phone }),
-          ...(room && { room }),
+    if (isSignup) {
+      // Signup: create new user with provided details
+      userDoc = await User.findOneAndUpdate(
+        { email: email.toLowerCase().trim() },
+        { 
+          $set: {
+            name: name || email.split('@')[0],
+            ...(phone && { phone }),
+            ...(room && { room }),
+          }
         },
-        $setOnInsert: { name: name || email.split('@')[0], email }
-      },
-      { new: true, upsert: true }
-    );
+        { new: true, upsert: true }
+      );
+    } else {
+      // Login: fetch existing user data from DB
+      userDoc = await User.findOne({ email: email.toLowerCase().trim() });
+    }
   } catch (e) {
-    console.error('User upsert error:', e.message);
+    console.error('User DB error:', e.message);
   }
 
   const token = jwt.sign({ role: 'customer', email }, JWT_SECRET, { expiresIn: '24h' });

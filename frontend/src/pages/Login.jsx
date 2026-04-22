@@ -43,7 +43,7 @@ export default function Login() {
       const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, isSignup })
       });
       const data = await res.json();
       if(data.success) {
